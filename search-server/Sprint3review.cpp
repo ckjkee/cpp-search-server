@@ -89,26 +89,20 @@ public:
     template <typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words)
         : stop_words_(MakeUniqueNonEmptyStrings(stop_words)) {
-           for(const auto& word : stop_words){
-               if(!IsValidText(word)){
+               if(!(all_of(stop_words.begin(), stop_words.end(),IsValidText))){
                    throw invalid_argument("Стоп слова содержат недопустимые символы");
                }
-           }
+           
     }
  
     explicit SearchServer(const string& stop_words_text)
         : SearchServer(
             SplitIntoWords(stop_words_text))  // Invoke delegating constructor from string container
     {
-           if(!IsValidText(stop_words_text)){
-                throw invalid_argument("Стоп слова содержат недопустимые символы");
-            }
+           
     }
  
     int GetDocumentId(int index) const {
-        if (index < 0 || index >= ids_.size()) {
-            throw out_of_range("Такой айди недоступен");
-        }
         return ids_.at(index);
     }
  
@@ -137,19 +131,11 @@ public:
     vector<Document> FindTopDocuments(const string& raw_query,
                                         DocumentPredicate document_predicate) const {
         const Query query = ParseQuery(raw_query);
-        if (!query.valid) {
-             throw invalid_argument("Недопустимый запрос");;
-        }
-        for(const auto& word : query.plus_words){
-            if(!IsValidText(word)){
-                 throw invalid_argument("запрос содержит недопустимые символы");
-            }
-        }
        auto matched_documents = FindAllDocuments(query, document_predicate);
- 
         sort(matched_documents.begin(), matched_documents.end(),
              [](const Document& lhs, const Document& rhs) {
-                 if (abs(lhs.relevance - rhs.relevance) < 1e-6) {
+                  const double EPSILON = 1e-6;
+                 if (abs(lhs.relevance - rhs.relevance) < EPSILON) {
                      return lhs.rating > rhs.rating;
                  } else {
                      return lhs.relevance > rhs.relevance;
@@ -183,10 +169,6 @@ public:
 tuple<vector<string>, DocumentStatus> MatchDocument(const string& raw_query,
                                      int document_id) const {
         const Query query = ParseQuery(raw_query);
-        if (!query.valid) {
-             throw invalid_argument("некорректный запрос");
-        }
- 
         vector<string> matched_words;
         for (const string& word : query.plus_words) {
             if(!IsValidText(word)){
@@ -265,16 +247,19 @@ private:
             is_minus = true;
             text = text.substr(1);
             if (text.empty()) {
-                valid = false;
+                throw invalid_argument("запрос содержит недопустимые символы");
             }
             else if (text[0] == '-') {
                 
-                valid = false;
+                 throw invalid_argument("запрос содержит недопустимые символы");
+            }}
+             if(!IsValidText(text)){
+                throw invalid_argument("запрос содержит недопустимые символы");
             }
             else {
                 valid = IsValidText(text);
             }
-        }
+        
         return {text, is_minus, IsStopWord(text), valid};
     }
  
