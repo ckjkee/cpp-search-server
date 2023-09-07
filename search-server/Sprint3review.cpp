@@ -58,17 +58,13 @@ struct Document {
     int rating = 0;
 };
  
-static bool IsValidText(const string& text) {
-    return none_of(text.begin(), text.end(), [](auto c){ 
-        return c >= '\0' && c < ' '; 
-    });
-}
+
  
 template <typename StringContainer>
 set<string> MakeUniqueNonEmptyStrings(const StringContainer& strings) {
     set<string> non_empty_strings;
     for (const string& str : strings) {
-        if (!str.empty() && IsValidText(str)) {
+        if (!str.empty()) {
             non_empty_strings.insert(str);
         }
     }
@@ -84,7 +80,7 @@ enum class DocumentStatus {
  
 class SearchServer {
 public:
-    inline static constexpr int INVALID_DOCUMENT_ID = -1;
+   
  
     template <typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words)
@@ -171,9 +167,6 @@ tuple<vector<string>, DocumentStatus> MatchDocument(const string& raw_query,
         const Query query = ParseQuery(raw_query);
         vector<string> matched_words;
         for (const string& word : query.plus_words) {
-            if(!IsValidText(word)){
-                 throw invalid_argument("запрос содержит недопустимые символы");
-            }
             if (word_to_document_freqs_.count(word) == 0) {
                 continue;
             }
@@ -182,9 +175,6 @@ tuple<vector<string>, DocumentStatus> MatchDocument(const string& raw_query,
             }
         }
         for (const string& word : query.minus_words) {
-            if(!IsValidText(word)){
-                throw invalid_argument("запрос содержит недопустимые символы");
-            }
             if (word_to_document_freqs_.count(word) == 0) {
                 continue;
             }
@@ -210,6 +200,12 @@ private:
     bool IsStopWord(const string& word) const {
         return stop_words_.count(word) > 0;
     }
+
+    static bool IsValidText(const string& text) {
+    return none_of(text.begin(), text.end(), [](auto c){ 
+        return c >= '\0' && c < ' '; 
+    });
+}
  
     vector<string> SplitIntoWordsNoStop(const string& text) const {
         vector<string> words;
@@ -236,12 +232,12 @@ private:
         string data;
         bool is_minus;
         bool is_stop;
-        bool is_valid;
+        
     };
  
     QueryWord ParseQueryWord(string text) const {
         bool is_minus = false;
-        bool valid = true;
+        
         // Word shouldn't be empty
         if (text[0] == '-') {
             is_minus = true;
@@ -256,17 +252,15 @@ private:
              if(!IsValidText(text)){
                 throw invalid_argument("запрос содержит недопустимые символы");
             }
-            else {
-                valid = IsValidText(text);
-            }
+           
         
-        return {text, is_minus, IsStopWord(text), valid};
+        return {text, is_minus, IsStopWord(text)};
     }
  
     struct Query {
         set<string> plus_words;
         set<string> minus_words;
-        bool valid = true;
+        
     };
  
     Query ParseQuery(const string& text) const {
@@ -279,9 +273,6 @@ private:
                 } else {
                     query.plus_words.insert(query_word.data);
                 }
-            }
-            if (!query_word.is_valid) {
-                query.valid = false;
             }
         }
         return query;
