@@ -1,5 +1,7 @@
 #include "search_server.h"
 
+     
+
     SearchServer::SearchServer(const std::string& stop_words_text)
         : SearchServer(
             SplitIntoWords(stop_words_text))  
@@ -136,4 +138,5 @@ SearchServer::Query SearchServer::ParseQuery(const std::string& text) const {
 double SearchServer::ComputeWordInverseDocumentFreq(const std::string& word) const {
         return log(GetDocumentCount() * 1.0 / word_to_document_freqs_.at(word).size());
     }
+
 

@@ -1,14 +1,22 @@
 #pragma once
 #include <iostream>
+#include <set>
 #include "paginator.h"
 #include "document.h"
 
-template <typename Iterator>
-std::ostream& operator<<(std::ostream& out, IteratorRange<Iterator> it){
-    for(auto iter = it.begin(); iter < it.end(); ++iter){
-        out << *iter ;
-    }
-    return out;
-}
 
-std::ostream& operator<<(std::ostream& out, Document doc);
+
+
+std::vector<std::string> SplitIntoWords(const std::string& text);
+
+template <typename StringContainer>
+std::set<std::string> MakeUniqueNonEmptyStrings(const StringContainer& strings) {
+    std::set<std::string> non_empty_strings;
+    for (const std::string& str : strings) {
+        if (!str.empty()) {
+            non_empty_strings.insert(str);
+        }
+    }
+    return non_empty_strings;
+}
+   

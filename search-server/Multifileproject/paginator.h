@@ -69,3 +69,11 @@ template <typename Container>
 auto Paginate(const Container& c, size_t page_size) {
     return Paginator(begin(c), end(c), page_size);
 }
+
+template <typename Iterator>
+std::ostream& operator<<(std::ostream& out, IteratorRange<Iterator> it){
+    for(auto iter = it.begin(); iter < it.end(); ++iter){
+        out << *iter ;
+    }
+    return out;
+}
